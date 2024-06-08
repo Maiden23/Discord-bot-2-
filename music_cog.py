@@ -126,8 +126,18 @@ class music_cog(commands.Cog):
             queue_info = ""
             for index, item in enumerate(self.music_queue):
                 queue_info += f"{index + 1}. {item[0]['title']}\n"
-            await ctx.send(f"**Teri Queue:\n{queue_info}**")
+            await ctx.send(f"**Uhura Show Queue:\n{queue_info}**")
         else:
-            await ctx.send("Koi Ganna Laga bc.")
+            await ctx.send("Add music , kirk out")
             
+    
+    @commands.command(name="np",help="Song ur playing rn")
+    async def now_playing(self,ctx,play):
+        if self.isplaying and self.music_queue:
+            await ctx.send(f"What did u expect?: {play}")
+        else:
+            await ctx.send("Play Something")
+            
+    #@commands.command(name="remove", aliases=['re'],help="Removes the song from the queue")
+    #async def remove(self,ctx,queue):
         
