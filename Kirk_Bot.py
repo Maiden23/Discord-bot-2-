@@ -25,4 +25,4 @@ async def on_ready():
     await bot.add_cog(music_cog(bot))
 
 # Run the bot using the token from environment variables
-bot.run("MTI0ODE1MTMzMzk5NTgxMDg4OQ.GP_lBU.rRl7V-kPfrELlhOXC7J1PoA7zLs-I4Has-EoOs")
+bot.run("")
