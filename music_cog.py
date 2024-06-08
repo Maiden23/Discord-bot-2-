@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 from yt_dlp import YoutubeDL
 
@@ -10,25 +13,36 @@ class music_cog(commands.Cog):
         self.ispaused = False
         self.music_queue = []
         self.YDL_options = {'format': 'bestaudio', 'noplaylist': True}
-        self.FFMPEG_options = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 
-                                'options': '-vn', 'executable':'C:\\Users\\angel\\ffmpeg-2024-06-03-git-77ad449911-full_build\\ffmpeg-2024-06-03-git-77ad449911-full_build\\bin'}
+        self.FFMPEG_options = {
+            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'options': '-vn',
+            'executable': "C:\\Users\\angel\\ffmpeg-2024-06-06-git-d55f5cba7b-full_build\\bin\\ffmpeg.exe"
+        }
         self.vc = None
 
     def search_yt(self, item):
         with YoutubeDL(self.YDL_options) as ydl:
             try:
-                info = ydl.extract_info(f"ytsearch:{item}", download=False)['entries'][0]
+                info = ydl.extract_info(f"ytsearch:{item}", download=False)
+                logging.info(f"Extracted Info: {info}")
+                video_info = info['entries'][0]
+                logging.info(f"Video Info: {video_info}")
+                return {'source': video_info['url'], 'title': video_info['title']}
             except Exception as e:
-                print(f"Error searching YouTube: {e}")
+                logging.error(f"Error searching YouTube: {e}")
                 return False
-            return {'source': info['formats'][0]['url'], 'title': info['title']}
 
     def play_next(self):
         if len(self.music_queue) > 0:
             self.isplaying = True
             m_url = self.music_queue[0][0]['source']
             self.music_queue.pop(0)
-            self.vc.play(discord.FFmpegPCMAudio(m_url), after=lambda e: self.play_next())
+            try:
+                logging.info(f"Playing next song: {m_url}")
+                self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_options), after=lambda e: self.play_next())
+            except Exception as e:
+                logging.error(f"Error playing next song: {e}")
+                self.play_next()
         else:
             self.isplaying = False
 
@@ -36,18 +50,25 @@ class music_cog(commands.Cog):
         if len(self.music_queue) > 0:
             self.isplaying = True
             m_url = self.music_queue[0][0]['source']
+            logging.info(f"URL to play: {m_url}")
             if self.vc is None or not self.vc.is_connected():
                 try:
                     self.vc = await self.music_queue[0][1].connect()
                 except Exception as e:
                     await ctx.send("Not able to connect to the voice channel.")
-                    print(f"Error connecting to voice channel: {e}")
+                    logging.error(f"Error connecting to voice channel: {e}")
                     return
             else:
                 await self.vc.move_to(self.music_queue[0][1])
 
             self.music_queue.pop(0)
-            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_options), after=lambda e: self.play_next())
+            try:
+                logging.info("Starting playback")
+                self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_options), after=lambda e: self.play_next())
+            except Exception as e:
+                await ctx.send("Error playing the audio.")
+                logging.error(f"Error playing audio: {e}")
+                self.isplaying = False
         else:
             self.isplaying = False
 
@@ -93,8 +114,20 @@ class music_cog(commands.Cog):
             self.vc.stop()
             await self.play_music(ctx)
 
-    @commands.command(name="leave", aliases=['exit', 'q', 'quit'], help="Leave the voice channel")
+    @commands.command(name="leave", aliases=['exit', 'quit'], help="Leave the voice channel")
     async def leave(self, ctx):
         self.isplaying = False
         self.ispaused = False
         await self.vc.disconnect()
+    
+    @commands.command(name="queue", aliases=['q'], help="Queue ka kaam uk")
+    async def queue(self, ctx):
+        if self.music_queue:
+            queue_info = ""
+            for index, item in enumerate(self.music_queue):
+                queue_info += f"{index + 1}. {item[0]['title']}\n"
+            await ctx.send(f"**Teri Queue:\n{queue_info}**")
+        else:
+            await ctx.send("Koi Ganna Laga bc.")
+            
+        
