@@ -1,6 +1,6 @@
 import subprocess
 
-FFMPEG_PATH = "C:\\Users\\angel\\ffmpeg-2024-06-06-git-d55f5cba7b-full_build\\bin\\ffmpeg.exe"  # Replace with the actual path to ffmpeg.exe
+FFMPEG_PATH = "C:\\Users\\angel\\ffmpeg-2024-06-06-git-d55f5cba7b-full_build\\bin\\ffmpeg.exe"  
 test_command = [FFMPEG_PATH, '-version']
 
 try:
